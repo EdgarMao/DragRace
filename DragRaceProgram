@@ -1,142 +1,160 @@
-# -*- python: 3.6 -*-
+def LS3curve(rpm):
+	return -5.20106*10**(-9)*rpm**3+0.0000549853*rpm**2-0.101486*rpm+137.842
 
-import math
-import numpy as np
-import random
-import matplotlib.pyplot as plt
+def HAcurve(rpm):
+	return -1.29195*10**(-10)*rpm**3-1.86182*10**(-6)*rpm**2+0.0712826*rpm+156.981
 
-t = 0
-dt = 0.1
-E = 10e-22
-T = 300.0
-k = 1.3 * 10e-23
-mx = 16 / (6.02 * 10e-23) / 10e3
-my = 17 / (6.02 * 10e-23) / 10e3
-nx = int(10e22)
-ny = int(10e22)
-nz = 0
-nw = 0
-trails = 10
-dmin = 10e-2
-reactions = 0.0
-sideLength = 10e-6
+def GTcurve(rpm):
+	return -3.55512*10**(-9)*rpm**3+0.0000359275*x**2-0.029907*x+46.508
 
-list_t = []
-list_x = []
-list_y = []
-list_z = []
-list_w = []
-list_t.append(t)
-list_x.append(nx)
-list_y.append(ny)
-list_z.append(nz)
-list_w.append(nw)
+def LiftCurve(angle):
+	return 0.00017001**angle**3-0.00134799*angle**2-0.083323*angle+0.00658649
 
-while t < 10:
-	n = nx + ny + nz + nw
-	pnx = nx / n
-	pny = ny / n
-	pnz = nz / n
-	pnw = nw / n
-	for i in range(trails):
-		reactionWillHappen = True
-		random1 = random.random()
-		random2 = random.random()
-		if (random1 < pnx and random2 < 1-pny) or (random2 < pnx and random1 > 1-pny):
-			# Right particles, simulate reactions
-			x1 = random.random() * sideLength
-			y1 = random.random() * sideLength
-			z1 = random.random() * sideLength
-			x2 = random.random() * sideLength
-			y2 = random.random() * sideLength
-			z2 = random.random() * sideLength
-			if random1 < pnx:
-				m1 = mx
-				m2 = my
-			else:
-				m2 = mx
-				m1 = my
-			vx1 = math.sqrt(k*T/m1) * np.random.normal(0,1)
-			vy1 = math.sqrt(k*T/m1) * np.random.normal(0,1)
-			vz1 = math.sqrt(k*T/m1) * np.random.normal(0,1)
-			vx2 = math.sqrt(k*T/m2) * np.random.normal(0,1)
-			vy2 = math.sqrt(k*T/m2) * np.random.normal(0,1)
-			vz2 = math.sqrt(k*T/m2) * np.random.normal(0,1)
-			print('pass barrier 1')
-		else:
-			print('Didnt pass barrier 1')
-			reactionWillHappen = False
-			continue
-		if math.sqrt((x1-x2)**2+(y1-y2)**2+(z1-z2)**2) > dmin**2:
-			print('Didnt pass barrier 2')
-			reactionWillHappen = False
-			continue
-		else:
-			print('pass barrier 2')
-			pass
-		vxcm = (mx*vx1+m2*vx2)/(m1+m2)
-		vycm = (mx*vy1+m2*vy2)/(m1+m2)
-		vzcm = (mx*vz1+m2*vz2)/(m1+m2)
-		KEcm = 0.5 *m1*((vx1-vxcm)**2+(vy1-vycm)**2+(vz1-vzcm)**2) + \
-		0.5 *m2*((vx1-vxcm)**2+(vy1-vycm)**2+(vz1-vzcm)**2)
-		if KEcm < E:
-			print('Didnt pass barrier 3')
-			reactionWillHappen = False
-			print(KEcm)
-			continue
-		else:
-			print('pass barrier 3')
-			pass
-		reactions += 1
-		print(reactions/trails)
-	nx = nx - reactions / trails * n * (n-1)
-	ny = ny - reactions / trails * n * (n-1)
-	nz = nz + reactions / trails * n * (n-1)
-	nw = nw + reactions / trails * n * (n-1)
-	t += dt
-	list_t.append(t)
-	list_x.append(nx)
-	list_y.append(ny)
-	list_z.append(nz)
-	list_w.append(nw)
-	if nx < 0 or ny < 0 or nz < 0 or nw < 0:
-		break
+def DragCurve(angle):
+	return 3.37496*10**(-6)*angle**3+0.00119686*angle**2-0.0119591*angle+0.0647904
+
+x=0.0
+v=0.0
+t=0.0
+dt=0.0001
+
+#Fixed Parameters
+carMass=1724
+d=402.336
+mus=0.72
+areaOfSpoiler=0.15
+cod=0.33
+driveShaftMass=100
+wheelMass=100
+crossSectionArea=3
+h=1.5
+
+#Variable Parameters
+wheelBase=3.5
+carLength=5.0
+distanceBumperToAxle=1.0
+engineLocation=0.5
+engineType='LS'
+spoilerAttackAngle=0.0
+wheelWidth=215
+wheelDiameter=15
+aspectRatio=65
+
+'''
+#Engine##########
+
+	LS3 (Corvette)
+		Id=LS3
+		Dyno
+			BestFitCubic (rpm,hp)
+				[(1750,100), (3100,200), (4300,300), (6000,390), (6500,370)]
+			Weight
+				195kg
+
+	Hemi Apache (Challenger)
+		Id=HA
+		Dyno
+			BestFitCubic (rpm,hp)
+				[(1000,200), (2000,350), (4000,350), (4400,400), (4950,450), (5350,500), (6250,530), (7100,500)]
+			Weight
+				318 kg
+
+	5.OL GT (Mustang)
+		Id=GT
+		Dyno
+			BestFitCubic (rpm,hp)
+				[(1000,50), (2000,100), (3200,200), (4200,300), (5100,350), (6500,395)]
+		Weight
+			201 kg
+
+#Transmission########
+
+	Borg-Warnder T56
+		GearRatios=(1:2.97, 2:1.94, 3:1.35, 4:1.00, 5:0.84, 6:0.62, -1:3.38)
+
+#Differential########
+
+	Differential Ratio
+		3.83:1
+
+#Spoiler#############
+
+	Coefficient of Lift
+		Wind Tunnel
+			BestFitCubic (degrees,C1)
+				[(0,0), (5,-0.4), (10,-0.8), (13,-1.0), (15,-0.9), (20,-0.85)]
+
+	Coefficient of Drag
+		Wind Tunnel
+			BestFitCubic (degrees,Cd)
+				[(5,0.035), (10,0.07), (15,0.16), (17,0.23), (20,0.33)]
+
+#Specifications#######
+	1. The front tire cannot leave the ground.
+	2. The car in the simulation will be driven perfectly with no tire slipping.
+	3. Your tire and wheel size must be commerically avaliable.
+	4. Wheelbases are from 3.0m-4.0m
+	5. Car lengths are from 4.5m-5.5m
+	6. Distance from bumper to axle maybe 0.5m-1.5m
+	7. The engine may be 0.5m-2.0m from the front bumper or 0.5m-2.0m from the rear bumper.
+	8. The engine position is measured from the front of the car.
+	9. You must choose one of the given engines.
+	10. The horse power will be determined by a cubic fit to the given data.
+	11. The angle of attack for the spoiler may take values 0-25 degrees.
+	12. You may only change the variable parameters.
+	13. The spoiler must be at the end of the car 1m above the axel.
+	14. The height of the center of mass if the car body will be at the same as the engine and 0.2cm above the axels.
+'''
+
+if abs(wheelBase-3.5)>0.5:
+	print('Bad Wheelbase')
+elif abs(carLength-5.0)>0.5:
+	print('Bad Car Length')
+elif abs(1.0-distanceBumperToAxle)>0.5:
+	print('Bad Distance From Bumper to Axle')
+elif not abs(1.25-engineLocation)>0.75 and not abs(carLength-1.25-engineLocation)>0.75:
+	print('Bad Engine Location')
+elif not engineType in ['LS', 'HA', 'GT']:
+	print('Bad Engine Type')
+else:
+	k=0.5*carMass+0.25*driveShaftMass+wheelMass
+	if engineType=='LS':
+		hpCurve=LS3curve
+		em=195
+	elif engineType=='GT':
+		hpCurve=GTCurve
+		em=201
 	else:
-		print('Number explode', list_t[i-1])
-		pass
-print(' ')
-print("t =",list_t)
-print("x =",list_x)
-print("y =",list_y)
-print("z =",list_z)
-print("w =",list_w)
-
-def graph():
-	plt.figure('nz')
-	plt.title('Number of z as a function of time')
-	plt.plot(list_t, list_x, color = '#377EB8')
-	'''
-	plt.xlim(xmax=2000)
-	plt.xlim(xmin=0)
-	plt.ylim(ymax=2000)
-	plt.ylim(ymin=0)
-	'''
-	plt.xlabel('t [s]')
-	plt.ylabel('nz')
-	plt.grid(True)
-	plt.show()
-		
-'''
-kB = 1.38 * 10 ** -23
-m = 2*1.0079 / (6.02 * 10 ** 23) #mass of one H atom
-vx = math.sqrt(kB * 300 / m) * np.random.normal(0,1) #temperature
-vy = math.sqrt(kB * 300 / m) * np.random.normal(0,1) #temperature
-vz = math.sqrt(kB * 300 / m) * np.random.normal(0,1) #temperature
-KE = 0.5 * m * (vx**2 + vy**2 + vz**2)
-
-
-print vx
-print vy
-print vz
-print KE
-'''
+		hpCurve=HACurve
+		em=318
+	Fe=em*9.81
+	Fb=carMass*9.81
+	F=0
+	xe=wheelBase+distanceBumperToAxle-engineLocation
+	r=wheelDiameter*0.0256+wheelWidth/1000.0*aspectRatio/100.0
+	ys=r+1
+	xs=wheelBase+distanceBumperToAxle-carLength
+	xb=distanceBumperToAxle+wheelBase-carLength/2
+	while x<d:
+		t=t+dt
+		r=wheelDiameter*0.0256+wheelWidth/1000.0*aspectRatio/100.0
+		FD=0.5*cod*crossSectionArea*v**2
+		Fd=0.5*DragCurve(spoilerAttackAngle)*areaOfSpoiler*v**2
+		FL=0.5*LiftCurve(spoilerAttackAngle)*areaOfSpoiler*v**2
+		F2=-(Fd*ys-FL*xs-Fe*xe+h/2*Fd-xb*Fb+r*F)/wheelBase
+		F1=Fe+Fb+FD-F2
+		gearRatios=[2.97,1.94,1.35,1.00,0.84,0.62]
+		hp=0
+		for gear in gearRatios:
+			rpm=(v/r)*(3.83/1)*gear*(60/2/3.1415)
+			if hpCurve(rpm)>hp:
+				hp=hpCurve(rpm)
+		P=hp*745.70
+		at=(F1*mus-Fd-FD)/2/k
+		aw=(wheelWidth*Fb-h/2*Fd+xe*Fe-FD*ys+FL*xs-(FD+Fd)*r)/r/2/k
+		ap=(P-FD-Fd)/2/k
+		a=min([aw,at,ap])
+		x=x+v*dt+0.5*a*dt**2
+		v=v+a*dt
+		F=2*k*a+(FD+Fd)
+	print(t)
